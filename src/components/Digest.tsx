@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Game, LeagueDigest } from "@/lib/sports";
 
@@ -147,11 +148,19 @@ export function Digest({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10">
-      <header>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Today&apos;s Digest
-        </h1>
-        <p className="text-zinc-500 dark:text-zinc-400">{dateLabel}</p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            Today&apos;s Digest
+          </h1>
+          <p className="text-zinc-500 dark:text-zinc-400">{dateLabel}</p>
+        </div>
+        <Link
+          href="/podcast-prep"
+          className="shrink-0 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+        >
+          Podcast Prep →
+        </Link>
       </header>
 
       {hydrated && favoriteGames.length > 0 && (
