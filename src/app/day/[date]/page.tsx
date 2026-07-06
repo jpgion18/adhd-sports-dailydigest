@@ -70,6 +70,12 @@ export default async function DayPage({
             {date === today && (
               <p className="text-sm text-zinc-500 dark:text-zinc-400">Today</p>
             )}
+            <Link
+              href="/sources"
+              className="text-sm text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Sources →
+            </Link>
           </div>
           {hasNext ? (
             <Link
