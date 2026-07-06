@@ -22,6 +22,31 @@ export interface PodcastPrep {
 // insertion order — use the exported helpers, which sort by `date`.
 export const podcastPrepArchive: PodcastPrep[] = [
   {
+    date: "2026-07-06",
+    dateLabel: "July 6, 2026",
+    bigThree: [
+      {
+        team: "Phillies",
+        text: "Luzardo was even better than the final line — nine strikeouts and he retired the first eight Royals he faced in the 6-1 win, with Realmuto and Gabriel Rincones Jr. hitting back-to-back homers to make it 3-0 and Schwarber chipping in three singles. The series continues today in Kansas City, and Philly heads into the All-Star break with five representatives, including first-timer Brandon Marsh.",
+      },
+      {
+        team: "Eagles",
+        text: "It's a quiet news day on Broad Street with camp still three weeks out (July 28), so the coverage is turning to position-group previews — interior O-line questions around Cam Jurgens and Landon Dickerson are getting the early ink. The A.J. Brown-to-Patriots fallout is still simmering in the background heading into camp.",
+      },
+      {
+        team: "Sixers",
+        text: "Free agency's negotiating moratorium lifted at 12:01pm today and deals started becoming official: Dean Wade signed a 4-year, $39M deal (new president Mike Gansey's first signing) and Ariel Hukporti got a 1-year, $3.4M deal. Kelly Oubre Jr. is officially gone to Indiana and Quentin Grimes to the Lakers, while Anfernee Simons' deal from last week is now locked in alongside the Jaylen Brown trade.",
+      },
+    ],
+    worldCup: {
+      yesterday: "Norway shocked Brazil 2-1 at MetLife Stadium and England beat Mexico 3-2 in Mexico City, closing out the Round of 16 field alongside Monday's card.",
+      today: "USA-Belgium is the lone match today, Round of 16 at Lumen Field in Seattle, 8pm ET.",
+      usmnt: "Win and they're in the quarterfinals against the Spain/Portugal winner; lose and the co-hosts' tournament ends before the final eight — first knockout-round elimination game for the U.S. since 2002.",
+    },
+    weirdOne:
+      "Taylor Swift and Travis Kelce got married at Madison Square Garden on July 4th, with Wayne Gretzky and Selena Gomez among the guests. An NFL tight end getting married at the world's most famous arena in the middle of World Cup week is exactly the kind of chaos 2026 has been serving up.",
+  },
+  {
     date: "2026-07-05",
     dateLabel: "July 5, 2026",
     bigThree: [
