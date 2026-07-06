@@ -225,49 +225,187 @@ export async function fetchAllDigests(isoDate: string): Promise<LeagueDigest[]> 
   );
 }
 
-interface EspnBoxscoreTeamStat {
+// Team-level stats are nested two levels deep: each team has category
+// blocks (batting/pitching/fielding for MLB, etc.), and each category has
+// its own stats[] — not a flat list of {name, displayValue} like the
+// scoreboard's team records. Confirmed against a real MLB summary response.
+interface EspnBoxscoreStatItem {
   name?: string;
-  label?: string;
   displayValue?: string;
+}
+
+interface EspnBoxscoreCategory {
+  name?: string;
+  stats?: EspnBoxscoreStatItem[];
 }
 
 interface EspnBoxscoreTeam {
   team?: { abbreviation?: string };
-  statistics?: EspnBoxscoreTeamStat[];
+  statistics?: EspnBoxscoreCategory[];
+}
+
+// Per-player box score: category.type identifies "batting"/"pitching"/etc,
+// labels are parallel to each athlete's stats array (index-matched, e.g.
+// labels[3] === "H" pairs with athlete.stats[3] being that player's hit
+// count) rather than each stat being individually named.
+interface EspnBoxscoreAthleteLine {
+  athlete?: { displayName?: string };
+  stats?: string[];
+}
+
+interface EspnBoxscorePlayerCategory {
+  type?: string;
+  labels?: string[];
+  athletes?: EspnBoxscoreAthleteLine[];
+}
+
+interface EspnBoxscorePlayerTeam {
+  team?: { abbreviation?: string };
+  statistics?: EspnBoxscorePlayerCategory[];
 }
 
 interface EspnSummaryResponse {
-  boxscore?: { teams?: EspnBoxscoreTeam[] };
+  boxscore?: { teams?: EspnBoxscoreTeam[]; players?: EspnBoxscorePlayerTeam[] };
   leaders?: EspnLeaderCategory[];
 }
 
-// A handful of team-level totals (hits/errors, total yards, shooting %,
-// shots on goal, etc.) reads better than every stat ESPN tracks, which for
-// some sports runs 15+ rows deep.
-const MAX_TEAM_STAT_ROWS = 8;
+// A curated handful of team totals per league/category — showing every
+// stat ESPN tracks (MLB's "batting" category alone has ~55) would bury the
+// few anyone actually cares about. NFL/NBA/NHL entries are best-effort
+// guesses at ESPN's likely naming and unverified against a live box score
+// (those leagues are out of season); a wrong guess just silently produces
+// no row for that stat rather than a broken one, so it's safe to leave
+// until someone checks a real game.
+const KEY_TEAM_STATS: Record<LeagueKey, { category: string; stat: string; label: string }[]> = {
+  mlb: [
+    { category: "batting", stat: "hits", label: "Hits" },
+    { category: "batting", stat: "homeRuns", label: "Home Runs" },
+    { category: "batting", stat: "walks", label: "Walks" },
+    { category: "batting", stat: "runnersLeftOnBase", label: "Left on Base" },
+    { category: "pitching", stat: "strikeouts", label: "Strikeouts" },
+    { category: "pitching", stat: "ERA", label: "ERA" },
+    { category: "fielding", stat: "errors", label: "Errors" },
+  ],
+  nfl: [
+    { category: "passing", stat: "netPassingYards", label: "Passing Yards" },
+    { category: "rushing", stat: "rushingYards", label: "Rushing Yards" },
+    { category: "general", stat: "turnovers", label: "Turnovers" },
+    { category: "general", stat: "totalYards", label: "Total Yards" },
+  ],
+  nba: [
+    { category: "general", stat: "rebounds", label: "Rebounds" },
+    { category: "general", stat: "assists", label: "Assists" },
+    { category: "general", stat: "turnovers", label: "Turnovers" },
+    { category: "general", stat: "fieldGoalPct", label: "FG%" },
+  ],
+  nhl: [
+    { category: "general", stat: "shotsTotal", label: "Shots" },
+    { category: "general", stat: "powerPlayPct", label: "Power Play %" },
+    { category: "general", stat: "penaltyMinutes", label: "PIM" },
+  ],
+};
 
 function parseTeamStats(
   teams: EspnBoxscoreTeam[] | undefined,
   awayAbbr: string,
   homeAbbr: string,
+  league: LeagueKey,
 ): TeamStatRow[] {
   if (!teams || teams.length < 2) return [];
 
   const away = teams.find((t) => t.team?.abbreviation === awayAbbr) ?? teams[0];
   const home = teams.find((t) => t.team?.abbreviation === homeAbbr) ?? teams[1];
-  const homeByName = new Map((home?.statistics ?? []).map((s) => [s.name, s]));
+
+  function findStat(team: EspnBoxscoreTeam | undefined, category: string, stat: string) {
+    return team?.statistics
+      ?.find((c) => c.name === category)
+      ?.stats?.find((s) => s.name === stat)?.displayValue;
+  }
 
   const rows: TeamStatRow[] = [];
-  for (const stat of away?.statistics ?? []) {
-    if (rows.length >= MAX_TEAM_STAT_ROWS) break;
-    const homeStat = stat.name ? homeByName.get(stat.name) : undefined;
-    rows.push({
-      label: stat.label ?? stat.name ?? "Stat",
-      away: stat.displayValue ?? "—",
-      home: homeStat?.displayValue ?? "—",
-    });
+  for (const { category, stat, label } of KEY_TEAM_STATS[league] ?? []) {
+    const awayVal = findStat(away, category, stat);
+    const homeVal = findStat(home, category, stat);
+    // Neither team has this stat — likely a wrong category/name guess for
+    // this league, so skip the row instead of showing a false "—" vs "—".
+    if (awayVal === undefined && homeVal === undefined) continue;
+    rows.push({ label, away: awayVal ?? "—", home: homeVal ?? "—" });
   }
   return rows;
+}
+
+function pickTopPerformer(
+  category: EspnBoxscorePlayerCategory,
+  teamAbbr: string | null,
+): GameLeader | null {
+  const athletes = category.athletes ?? [];
+  const labels = category.labels ?? [];
+  if (athletes.length === 0) return null;
+
+  const idx = (label: string) => labels.indexOf(label);
+  const numAt = (line: EspnBoxscoreAthleteLine, i: number) =>
+    i >= 0 ? Number(line.stats?.[i] ?? 0) || 0 : 0;
+
+  if (category.type === "batting") {
+    const hrIdx = idx("HR");
+    const rbiIdx = idx("RBI");
+    const hIdx = idx("H");
+    const best = athletes.reduce((top, a) => {
+      const score = numAt(a, hrIdx) * 4 + numAt(a, rbiIdx) * 2 + numAt(a, hIdx);
+      const topScore = numAt(top, hrIdx) * 4 + numAt(top, rbiIdx) * 2 + numAt(top, hIdx);
+      return score > topScore ? a : top;
+    }, athletes[0]);
+
+    const name = best.athlete?.displayName;
+    if (!name) return null;
+    const parts = [
+      hIdx >= 0 && `${best.stats?.[hIdx]} H`,
+      hrIdx >= 0 && numAt(best, hrIdx) > 0 && `${best.stats?.[hrIdx]} HR`,
+      rbiIdx >= 0 && `${best.stats?.[rbiIdx]} RBI`,
+    ].filter(Boolean);
+    return { label: "Batting", playerName: name, team: teamAbbr, value: parts.join(", ") };
+  }
+
+  if (category.type === "pitching") {
+    const kIdx = idx("K");
+    const erIdx = idx("ER");
+    const ipIdx = idx("IP");
+    const best = athletes.reduce((top, a) => {
+      const score = numAt(a, kIdx) - numAt(a, erIdx);
+      const topScore = numAt(top, kIdx) - numAt(top, erIdx);
+      return score > topScore ? a : top;
+    }, athletes[0]);
+
+    const name = best.athlete?.displayName;
+    if (!name) return null;
+    const parts = [
+      ipIdx >= 0 && `${best.stats?.[ipIdx]} IP`,
+      kIdx >= 0 && `${best.stats?.[kIdx]} K`,
+      erIdx >= 0 && `${best.stats?.[erIdx]} ER`,
+    ].filter(Boolean);
+    return { label: "Pitching", playerName: name, team: teamAbbr, value: parts.join(", ") };
+  }
+
+  // Unrecognized category (NFL/NBA/NHL, unverified) — rather than guess
+  // which column means "good," just surface the first listed athlete
+  // (typically the most prominent/starter) with their full stat line.
+  const first = athletes[0];
+  const name = first.athlete?.displayName;
+  if (!name) return null;
+  const value = labels
+    .map((label, i) => (first.stats?.[i] ? `${first.stats[i]} ${label}` : null))
+    .filter(Boolean)
+    .join(", ");
+  return { label: category.type ?? "Stats", playerName: name, team: teamAbbr, value };
+}
+
+function parsePlayerTopPerformers(players: EspnBoxscorePlayerTeam[] | undefined): GameLeader[] {
+  return (players ?? []).flatMap((teamBox) => {
+    const teamAbbr = teamBox.team?.abbreviation ?? null;
+    return (teamBox.statistics ?? [])
+      .map((category) => pickTopPerformer(category, teamAbbr))
+      .filter((leader): leader is GameLeader => leader !== null);
+  });
 }
 
 // Fetched on demand (only when a user expands a game's box score), unlike
@@ -291,9 +429,16 @@ export async function fetchGameBoxScore(
 
     const data: EspnSummaryResponse = await res.json();
 
+    // The scoreboard's mirrored "leaders" field doesn't exist on this
+    // endpoint for MLB (came back null) — fall back to deriving top
+    // performers from the real per-player box score when it's absent.
+    const rootLeaders = extractLeaders({ leaders: data.leaders }, undefined, undefined);
+    const topPerformers =
+      rootLeaders.length > 0 ? rootLeaders : parsePlayerTopPerformers(data.boxscore?.players);
+
     return {
-      teamStats: parseTeamStats(data.boxscore?.teams, awayAbbr, homeAbbr),
-      topPerformers: extractLeaders({ leaders: data.leaders }, undefined, undefined),
+      teamStats: parseTeamStats(data.boxscore?.teams, awayAbbr, homeAbbr, league),
+      topPerformers,
     };
   } catch {
     return { teamStats: [], topPerformers: [] };
