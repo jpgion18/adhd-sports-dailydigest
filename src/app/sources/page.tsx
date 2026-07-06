@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SourceCard } from "@/components/SourceCard";
 import { sourceGroups } from "@/data/sources";
 
 export const metadata = {
@@ -31,22 +32,7 @@ export default function SourcesPage() {
             </h2>
             <ul className="flex flex-col gap-3">
               {group.accounts.map((account) => (
-                <li
-                  key={account.handle}
-                  className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
-                >
-                  <a
-                    href={`https://x.com/${account.handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-blue-600 hover:underline dark:text-blue-400"
-                  >
-                    {account.name}
-                  </a>
-                  <span className="text-zinc-500 dark:text-zinc-400"> · @{account.handle}</span>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{account.outlet}</p>
-                  <p className="mt-1 text-zinc-700 dark:text-zinc-300">{account.blurb}</p>
-                </li>
+                <SourceCard key={account.handle} {...account} />
               ))}
             </ul>
           </section>
