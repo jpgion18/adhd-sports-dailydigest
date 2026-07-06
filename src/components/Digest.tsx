@@ -98,7 +98,7 @@ function GameRow({
       {game.leaders.length > 0 && (
         <details className="mt-2">
           <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400">
-            Box Score
+            Top Performers
           </summary>
           <ul className="mt-2 flex flex-col gap-1">
             {game.leaders.map((leader, i) => (

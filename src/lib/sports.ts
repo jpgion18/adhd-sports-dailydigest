@@ -49,7 +49,11 @@ export interface LeagueDigest {
 interface EspnLeaderCategory {
   name?: string;
   displayName?: string;
-  leaders?: { displayValue?: string; athlete?: { displayName?: string } }[];
+  leaders?: {
+    displayValue?: string;
+    athlete?: { displayName?: string };
+    team?: { abbreviation?: string };
+  }[];
 }
 
 interface EspnCompetitor {
@@ -102,39 +106,40 @@ function toTeamInfo(competitor: EspnCompetitor | undefined): TeamInfo {
   };
 }
 
-// ESPN puts stat leaders either per-team (competitor.leaders, the common
-// case) or shared across the whole game (competition.leaders) depending on
-// the sport/season — try per-team first and fall back to the shared list,
-// since we can't be sure which shape a given league/date will return.
+// ESPN sometimes mirrors the same game-wide leaders list onto both
+// competitor.leaders and competition.leaders rather than giving each team
+// its own list — reading only one source (in this preference order) and
+// deduping by category+player avoids showing every leader twice.
 function extractLeaders(
   competition: { leaders?: EspnLeaderCategory[] } | undefined,
   home: EspnCompetitor | undefined,
   away: EspnCompetitor | undefined,
 ): GameLeader[] {
-  const fromCategories = (
-    categories: EspnLeaderCategory[] | undefined,
-    team: string | null,
-  ): GameLeader[] =>
-    (categories ?? []).flatMap((category) => {
-      const top = category.leaders?.[0];
-      if (!top?.athlete?.displayName) return [];
-      return [
-        {
-          label: category.displayName ?? category.name ?? "Leader",
-          playerName: top.athlete.displayName,
-          team,
-          value: top.displayValue ?? "",
-        },
-      ];
+  const categories =
+    competition?.leaders ?? away?.leaders ?? home?.leaders ?? [];
+
+  const seen = new Set<string>();
+  const leaders: GameLeader[] = [];
+
+  for (const category of categories) {
+    const top = category.leaders?.[0];
+    const playerName = top?.athlete?.displayName;
+    if (!playerName) continue;
+
+    const label = category.displayName ?? category.name ?? "Leader";
+    const key = `${label}:${playerName}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    leaders.push({
+      label,
+      playerName,
+      team: top?.team?.abbreviation ?? null,
+      value: top?.displayValue ?? "",
     });
+  }
 
-  const perTeam = [
-    ...fromCategories(away?.leaders, away?.team?.abbreviation ?? null),
-    ...fromCategories(home?.leaders, home?.team?.abbreviation ?? null),
-  ];
-  if (perTeam.length > 0) return perTeam;
-
-  return fromCategories(competition?.leaders, null);
+  return leaders;
 }
 
 // Canonical "today" as YYYY-MM-DD in the podcast's home timezone. Used both
