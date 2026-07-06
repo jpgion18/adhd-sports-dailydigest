@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { GameBoxScore } from "@/components/GameBoxScore";
 import type { Game, LeagueDigest } from "@/lib/sports";
 
 const FAVORITES_KEY = "adhd-digest:favorites";
@@ -48,6 +49,8 @@ function GameRow({
   isFavorite: (abbr: string) => boolean;
   onToggleFavorite: (abbr: string) => void;
 }) {
+  const [boxScoreOpened, setBoxScoreOpened] = useState(false);
+
   return (
     <li className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center justify-between gap-4">
@@ -95,22 +98,26 @@ function GameRow({
         <div className="shrink-0">{statusBadge(game)}</div>
       </div>
 
-      {game.leaders.length > 0 && (
-        <details className="mt-2">
+      {game.state !== "pre" && (
+        <details
+          className="mt-2"
+          onToggle={(e) => {
+            if (e.currentTarget.open) setBoxScoreOpened(true);
+          }}
+        >
           <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400">
-            Top Performers
+            Box Score
           </summary>
-          <ul className="mt-2 flex flex-col gap-1">
-            {game.leaders.map((leader, i) => (
-              <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300">
-                <span className="text-zinc-500 dark:text-zinc-400">
-                  {leader.team ? `${leader.team} ` : ""}
-                  {leader.label}:{" "}
-                </span>
-                {leader.playerName} — {leader.value}
-              </li>
-            ))}
-          </ul>
+          <div className="mt-2">
+            {boxScoreOpened && (
+              <GameBoxScore
+                league={game.league}
+                eventId={game.id}
+                awayAbbr={game.away.abbreviation}
+                homeAbbr={game.home.abbreviation}
+              />
+            )}
+          </div>
         </details>
       )}
     </li>

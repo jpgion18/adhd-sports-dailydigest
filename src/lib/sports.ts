@@ -36,7 +36,17 @@ export interface Game {
   statusDetail: string;
   home: TeamInfo;
   away: TeamInfo;
-  leaders: GameLeader[];
+}
+
+export interface TeamStatRow {
+  label: string;
+  away: string;
+  home: string;
+}
+
+export interface BoxScoreResult {
+  teamStats: TeamStatRow[];
+  topPerformers: GameLeader[];
 }
 
 export interface LeagueDigest {
@@ -109,7 +119,9 @@ function toTeamInfo(competitor: EspnCompetitor | undefined): TeamInfo {
 // ESPN sometimes mirrors the same game-wide leaders list onto both
 // competitor.leaders and competition.leaders rather than giving each team
 // its own list — reading only one source (in this preference order) and
-// deduping by category+player avoids showing every leader twice.
+// deduping by category+player avoids showing every leader twice. Used
+// against the box score summary endpoint below, not the scoreboard (the
+// scoreboard's own leaders field was the source of that duplication bug).
 function extractLeaders(
   competition: { leaders?: EspnLeaderCategory[] } | undefined,
   home: EspnCompetitor | undefined,
@@ -193,7 +205,6 @@ export async function fetchLeagueDigest(
         statusDetail: statusType?.shortDetail ?? statusType?.detail ?? "",
         home: toTeamInfo(home),
         away: toTeamInfo(away),
-        leaders: extractLeaders(competition, home, away),
       };
     });
 
@@ -212,4 +223,79 @@ export async function fetchAllDigests(isoDate: string): Promise<LeagueDigest[]> 
   return Promise.all(
     LEAGUES.map(({ key, sportPath, label }) => fetchLeagueDigest(key, sportPath, label, isoDate)),
   );
+}
+
+interface EspnBoxscoreTeamStat {
+  name?: string;
+  label?: string;
+  displayValue?: string;
+}
+
+interface EspnBoxscoreTeam {
+  team?: { abbreviation?: string };
+  statistics?: EspnBoxscoreTeamStat[];
+}
+
+interface EspnSummaryResponse {
+  boxscore?: { teams?: EspnBoxscoreTeam[] };
+  leaders?: EspnLeaderCategory[];
+}
+
+// A handful of team-level totals (hits/errors, total yards, shooting %,
+// shots on goal, etc.) reads better than every stat ESPN tracks, which for
+// some sports runs 15+ rows deep.
+const MAX_TEAM_STAT_ROWS = 8;
+
+function parseTeamStats(
+  teams: EspnBoxscoreTeam[] | undefined,
+  awayAbbr: string,
+  homeAbbr: string,
+): TeamStatRow[] {
+  if (!teams || teams.length < 2) return [];
+
+  const away = teams.find((t) => t.team?.abbreviation === awayAbbr) ?? teams[0];
+  const home = teams.find((t) => t.team?.abbreviation === homeAbbr) ?? teams[1];
+  const homeByName = new Map((home?.statistics ?? []).map((s) => [s.name, s]));
+
+  const rows: TeamStatRow[] = [];
+  for (const stat of away?.statistics ?? []) {
+    if (rows.length >= MAX_TEAM_STAT_ROWS) break;
+    const homeStat = stat.name ? homeByName.get(stat.name) : undefined;
+    rows.push({
+      label: stat.label ?? stat.name ?? "Stat",
+      away: stat.displayValue ?? "—",
+      home: homeStat?.displayValue ?? "—",
+    });
+  }
+  return rows;
+}
+
+// Fetched on demand (only when a user expands a game's box score), unlike
+// the scoreboard above — pulling full box scores for every game up front
+// would mean one extra ESPN request per game on every page load.
+export async function fetchGameBoxScore(
+  league: LeagueKey,
+  eventId: string,
+  awayAbbr: string,
+  homeAbbr: string,
+): Promise<BoxScoreResult> {
+  const sportPath = LEAGUES.find((l) => l.key === league)?.sportPath;
+  if (!sportPath) return { teamStats: [], topPerformers: [] };
+
+  try {
+    const res = await fetch(
+      `https://site.api.espn.com/apis/site/v2/sports/${sportPath}/summary?event=${eventId}`,
+      { next: { revalidate: 60 } },
+    );
+    if (!res.ok) throw new Error(`ESPN responded with ${res.status}`);
+
+    const data: EspnSummaryResponse = await res.json();
+
+    return {
+      teamStats: parseTeamStats(data.boxscore?.teams, awayAbbr, homeAbbr),
+      topPerformers: extractLeaders({ leaders: data.leaders }, undefined, undefined),
+    };
+  } catch {
+    return { teamStats: [], topPerformers: [] };
+  }
 }
