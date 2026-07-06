@@ -14,6 +14,18 @@ export interface TeamInfo {
   name: string;
   score: number | null;
   winner: boolean;
+  /** Season record, e.g. "45-38". Absent if ESPN didn't include one. */
+  record: string | null;
+}
+
+export interface GameLeader {
+  /** Stat category, e.g. "Passing", "Home Runs", "Points". */
+  label: string;
+  playerName: string;
+  /** Team abbreviation the leader plays for, if known. */
+  team: string | null;
+  /** Pre-formatted value, e.g. "275 YDS, 2 TD" or "3 HR". */
+  value: string;
 }
 
 export interface Game {
@@ -24,6 +36,7 @@ export interface Game {
   statusDetail: string;
   home: TeamInfo;
   away: TeamInfo;
+  leaders: GameLeader[];
 }
 
 export interface LeagueDigest {
@@ -33,11 +46,19 @@ export interface LeagueDigest {
   error: string | null;
 }
 
+interface EspnLeaderCategory {
+  name?: string;
+  displayName?: string;
+  leaders?: { displayValue?: string; athlete?: { displayName?: string } }[];
+}
+
 interface EspnCompetitor {
   homeAway: "home" | "away";
   score?: string;
   winner?: boolean;
   team?: { abbreviation?: string; displayName?: string; shortDisplayName?: string };
+  records?: { type?: string; summary?: string }[];
+  leaders?: EspnLeaderCategory[];
 }
 
 interface EspnEvent {
@@ -49,6 +70,7 @@ interface EspnEvent {
   competitions?: {
     competitors?: EspnCompetitor[];
     status?: { type?: { state?: string; shortDetail?: string; detail?: string } };
+    leaders?: EspnLeaderCategory[];
   }[];
 }
 
@@ -63,6 +85,11 @@ function toGameState(state: string | undefined): GameState {
 }
 
 function toTeamInfo(competitor: EspnCompetitor | undefined): TeamInfo {
+  const record =
+    competitor?.records?.find((r) => r.type === "total")?.summary ??
+    competitor?.records?.[0]?.summary ??
+    null;
+
   return {
     abbreviation: competitor?.team?.abbreviation ?? "?",
     name:
@@ -71,7 +98,43 @@ function toTeamInfo(competitor: EspnCompetitor | undefined): TeamInfo {
       "Unknown",
     score: competitor?.score !== undefined ? Number(competitor.score) : null,
     winner: competitor?.winner ?? false,
+    record,
   };
+}
+
+// ESPN puts stat leaders either per-team (competitor.leaders, the common
+// case) or shared across the whole game (competition.leaders) depending on
+// the sport/season — try per-team first and fall back to the shared list,
+// since we can't be sure which shape a given league/date will return.
+function extractLeaders(
+  competition: { leaders?: EspnLeaderCategory[] } | undefined,
+  home: EspnCompetitor | undefined,
+  away: EspnCompetitor | undefined,
+): GameLeader[] {
+  const fromCategories = (
+    categories: EspnLeaderCategory[] | undefined,
+    team: string | null,
+  ): GameLeader[] =>
+    (categories ?? []).flatMap((category) => {
+      const top = category.leaders?.[0];
+      if (!top?.athlete?.displayName) return [];
+      return [
+        {
+          label: category.displayName ?? category.name ?? "Leader",
+          playerName: top.athlete.displayName,
+          team,
+          value: top.displayValue ?? "",
+        },
+      ];
+    });
+
+  const perTeam = [
+    ...fromCategories(away?.leaders, away?.team?.abbreviation ?? null),
+    ...fromCategories(home?.leaders, home?.team?.abbreviation ?? null),
+  ];
+  if (perTeam.length > 0) return perTeam;
+
+  return fromCategories(competition?.leaders, null);
 }
 
 // Canonical "today" as YYYY-MM-DD in the podcast's home timezone. Used both
@@ -125,6 +188,7 @@ export async function fetchLeagueDigest(
         statusDetail: statusType?.shortDetail ?? statusType?.detail ?? "",
         home: toTeamInfo(home),
         away: toTeamInfo(away),
+        leaders: extractLeaders(competition, home, away),
       };
     });
 

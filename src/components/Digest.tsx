@@ -49,44 +49,70 @@ function GameRow({
   onToggleFavorite: (abbr: string) => void;
 }) {
   return (
-    <li className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex flex-1 flex-col gap-1.5">
-        {[game.away, game.home].map((team) => (
-          <div key={team.abbreviation} className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onToggleFavorite(team.abbreviation)}
-              aria-label={
-                isFavorite(team.abbreviation)
-                  ? `Remove ${team.name} from favorites`
-                  : `Add ${team.name} to favorites`
-              }
-              className="text-lg leading-none text-zinc-300 hover:text-amber-500 dark:text-zinc-700"
-            >
-              {isFavorite(team.abbreviation) ? (
-                <span className="text-amber-500">★</span>
-              ) : (
-                "☆"
-              )}
-            </button>
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
-              {team.name}
-            </span>
-            {team.score !== null && (
-              <span
-                className={`ml-auto tabular-nums ${
-                  team.winner
-                    ? "font-bold text-zinc-900 dark:text-zinc-50"
-                    : "text-zinc-500 dark:text-zinc-500"
-                }`}
+    <li className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-1 flex-col gap-1.5">
+          {[game.away, game.home].map((team) => (
+            <div key={team.abbreviation} className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(team.abbreviation)}
+                aria-label={
+                  isFavorite(team.abbreviation)
+                    ? `Remove ${team.name} from favorites`
+                    : `Add ${team.name} to favorites`
+                }
+                className="text-lg leading-none text-zinc-300 hover:text-amber-500 dark:text-zinc-700"
               >
-                {team.score}
+                {isFavorite(team.abbreviation) ? (
+                  <span className="text-amber-500">★</span>
+                ) : (
+                  "☆"
+                )}
+              </button>
+              <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                {team.name}
               </span>
-            )}
-          </div>
-        ))}
+              {team.record && (
+                <span className="text-xs text-zinc-400 dark:text-zinc-500">
+                  ({team.record})
+                </span>
+              )}
+              {team.score !== null && (
+                <span
+                  className={`ml-auto tabular-nums ${
+                    team.winner
+                      ? "font-bold text-zinc-900 dark:text-zinc-50"
+                      : "text-zinc-500 dark:text-zinc-500"
+                  }`}
+                >
+                  {team.score}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="shrink-0">{statusBadge(game)}</div>
       </div>
-      <div className="shrink-0">{statusBadge(game)}</div>
+
+      {game.leaders.length > 0 && (
+        <details className="mt-2">
+          <summary className="cursor-pointer text-sm font-medium text-blue-600 dark:text-blue-400">
+            Box Score
+          </summary>
+          <ul className="mt-2 flex flex-col gap-1">
+            {game.leaders.map((leader, i) => (
+              <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300">
+                <span className="text-zinc-500 dark:text-zinc-400">
+                  {leader.team ? `${leader.team} ` : ""}
+                  {leader.label}:{" "}
+                </span>
+                {leader.playerName} — {leader.value}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </li>
   );
 }
