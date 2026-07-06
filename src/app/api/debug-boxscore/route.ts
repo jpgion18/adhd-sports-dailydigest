@@ -26,25 +26,41 @@ export async function GET(request: NextRequest) {
   const data = await res.json();
 
   const team0 = data.boxscore?.teams?.[0];
-  const team0Stat0 = team0?.statistics?.[0];
+  // Names only (not full stat descriptions) to keep this compact — we
+  // already confirmed the "batting" category's full shape last round.
+  const team0CategoryNames = (team0?.statistics ?? []).map(
+    (cat: { name?: string; stats?: { name?: string }[] }) => ({
+      category: cat.name,
+      statNames: (cat.stats ?? []).map((s) => s.name),
+    }),
+  );
+
+  const headerCompetition = data.header?.competitions?.[0];
 
   const player0 = data.boxscore?.players?.[0];
-  const player0Stat0 = player0?.statistics?.[0];
+  const player0Category0 = player0?.statistics?.[0];
 
   return NextResponse.json({
-    topLevelKeys: Object.keys(data),
-    boxscoreKeys: data.boxscore ? Object.keys(data.boxscore) : null,
-    leadersSample: data.leaders?.[0] ?? null,
+    // Category + stat *names* for every team-stats category (batting,
+    // pitching, fielding, etc.) — tells us what to pick for the comparison
+    // table without re-dumping full descriptions.
+    team0CategoryNames,
 
-    boxscoreTeamsCount: data.boxscore?.teams?.length ?? 0,
-    team0Keys: team0 ? Object.keys(team0) : null,
-    team0StatisticsCount: team0?.statistics?.length ?? 0,
-    team0Stat0Full: team0Stat0 ?? null,
-    team0AllStatKeys: team0?.statistics?.map((s: Record<string, unknown>) => Object.keys(s)) ?? null,
-    team0AllStatsRaw: team0?.statistics ?? null,
+    // Where might per-game stat leaders live, now that root "leaders" is null?
+    headerLeadersSample: headerCompetition?.leaders?.[0] ?? "NO leaders on header.competitions[0]",
+    headerCompetitionKeys: headerCompetition ? Object.keys(headerCompetition) : null,
 
+    // Per-player box score shape, for deriving top performers directly if
+    // header leaders don't pan out.
     boxscorePlayersCount: data.boxscore?.players?.length ?? 0,
     player0Keys: player0 ? Object.keys(player0) : null,
-    player0Stat0Full: player0Stat0 ?? null,
+    player0Category0Keys: player0Category0 ? Object.keys(player0Category0) : null,
+    player0Category0LabelsAndFirstAthlete: player0Category0
+      ? {
+          name: player0Category0.name,
+          labels: player0Category0.labels,
+          firstAthlete: player0Category0.athletes?.[0] ?? null,
+        }
+      : null,
   });
 }
