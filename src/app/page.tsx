@@ -7,6 +7,7 @@ export default async function Home() {
     weekday: "long",
     month: "long",
     day: "numeric",
+    timeZone: "America/New_York",
   }).format(new Date());
 
   return (

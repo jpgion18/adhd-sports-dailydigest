@@ -74,6 +74,20 @@ function toTeamInfo(competitor: EspnCompetitor | undefined): TeamInfo {
   };
 }
 
+// ESPN's scoreboard endpoint defaults to the *next* slate of games when a
+// league is out of season (e.g. it'll return September's Week 1 in July),
+// not "no games today." Passing an explicit date pins it to today only.
+export function todayYYYYMMDD(timeZone = "America/New_York"): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: string) => parts.find((p) => p.type === type)?.value;
+  return `${get("year")}${get("month")}${get("day")}`;
+}
+
 export async function fetchLeagueDigest(
   league: LeagueKey,
   sportPath: string,
@@ -81,7 +95,7 @@ export async function fetchLeagueDigest(
 ): Promise<LeagueDigest> {
   try {
     const res = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard`,
+      `https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard?dates=${todayYYYYMMDD()}`,
       { next: { revalidate: 60 } },
     );
 
