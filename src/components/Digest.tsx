@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Game, LeagueDigest } from "@/lib/sports";
 
@@ -100,13 +99,7 @@ function sortGames(games: Game[]) {
   });
 }
 
-export function Digest({
-  digests,
-  dateLabel,
-}: {
-  digests: LeagueDigest[];
-  dateLabel: string;
-}) {
+export function Digest({ digests }: { digests: LeagueDigest[] }) {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
 
@@ -147,27 +140,12 @@ export function Digest({
     );
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-10">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            Today&apos;s Digest
-          </h1>
-          <p className="text-zinc-500 dark:text-zinc-400">{dateLabel}</p>
-        </div>
-        <Link
-          href="/podcast-prep"
-          className="shrink-0 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-        >
-          Podcast Prep →
-        </Link>
-      </header>
-
+    <div className="flex flex-col gap-8">
       {hydrated && favoriteGames.length > 0 && (
         <section className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/40">
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold text-amber-900 dark:text-amber-200">
+          <h3 className="mb-3 flex items-center gap-2 text-lg font-semibold text-amber-900 dark:text-amber-200">
             <span className="text-amber-500">★</span> Your Teams
-          </h2>
+          </h3>
           <ul className="flex flex-col gap-3">
             {sortGames(favoriteGames.map((f) => f.game)).map((game) => (
               <GameRow
@@ -183,9 +161,9 @@ export function Digest({
 
       {digests.map((digest) => (
         <section key={digest.league}>
-          <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             {digest.label}
-          </h2>
+          </h3>
           {digest.error && (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Couldn&apos;t load {digest.label} games right now.
@@ -193,7 +171,7 @@ export function Digest({
           )}
           {!digest.error && digest.games.length === 0 && (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              No games today.
+              No games that day.
             </p>
           )}
           {!digest.error && digest.games.length > 0 && (

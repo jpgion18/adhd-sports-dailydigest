@@ -74,10 +74,10 @@ function toTeamInfo(competitor: EspnCompetitor | undefined): TeamInfo {
   };
 }
 
-// ESPN's scoreboard endpoint defaults to the *next* slate of games when a
-// league is out of season (e.g. it'll return September's Week 1 in July),
-// not "no games today." Passing an explicit date pins it to today only.
-export function todayYYYYMMDD(timeZone = "America/New_York"): string {
+// Canonical "today" as YYYY-MM-DD in the podcast's home timezone. Used both
+// to pin the ESPN query below and as the date-page redirect target, so the
+// scores view and the podcast-prep archive always agree on what day it is.
+export function todayISODate(timeZone = "America/New_York"): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
@@ -85,17 +85,22 @@ export function todayYYYYMMDD(timeZone = "America/New_York"): string {
     day: "2-digit",
   }).formatToParts(new Date());
   const get = (type: string) => parts.find((p) => p.type === type)?.value;
-  return `${get("year")}${get("month")}${get("day")}`;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
+// ESPN's scoreboard endpoint defaults to the *next* slate of games when a
+// league is out of season (e.g. it'll return September's Week 1 in July)
+// instead of returning nothing for that day. Passing an explicit date pins
+// it to that day only — this also lets us fetch scores for any past date.
 export async function fetchLeagueDigest(
   league: LeagueKey,
   sportPath: string,
   label: string,
+  isoDate: string,
 ): Promise<LeagueDigest> {
   try {
     const res = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard?dates=${todayYYYYMMDD()}`,
+      `https://site.api.espn.com/apis/site/v2/sports/${sportPath}/scoreboard?dates=${isoDate.replaceAll("-", "")}`,
       { next: { revalidate: 60 } },
     );
 
@@ -134,8 +139,8 @@ export async function fetchLeagueDigest(
   }
 }
 
-export async function fetchAllDigests(): Promise<LeagueDigest[]> {
+export async function fetchAllDigests(isoDate: string): Promise<LeagueDigest[]> {
   return Promise.all(
-    LEAGUES.map(({ key, sportPath, label }) => fetchLeagueDigest(key, sportPath, label)),
+    LEAGUES.map(({ key, sportPath, label }) => fetchLeagueDigest(key, sportPath, label, isoDate)),
   );
 }

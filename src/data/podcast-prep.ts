@@ -82,10 +82,6 @@ function sortedByDateDesc(): PodcastPrep[] {
   return [...podcastPrepArchive].sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
-export function getLatestPodcastPrep(): PodcastPrep | undefined {
-  return sortedByDateDesc()[0];
-}
-
 export function getPodcastPrepArchive(): PodcastPrep[] {
   return sortedByDateDesc();
 }

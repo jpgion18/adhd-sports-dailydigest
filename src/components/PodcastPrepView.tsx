@@ -9,9 +9,9 @@ export function PodcastPrepView({ data }: { data: PodcastPrep }) {
         <div className="flex flex-col gap-4">
           {bigThree.map((item) => (
             <div key={item.team}>
-              <h3 className="mb-1 font-semibold text-zinc-900 dark:text-zinc-50">
+              <h4 className="mb-1 font-semibold text-zinc-900 dark:text-zinc-50">
                 {item.team}
-              </h3>
+              </h4>
               <p className="text-zinc-700 dark:text-zinc-300">{item.text}</p>
             </div>
           ))}
@@ -102,9 +102,9 @@ export function PodcastPrepView({ data }: { data: PodcastPrep }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+      <h3 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
         {title}
-      </h2>
+      </h3>
       {children}
     </section>
   );
