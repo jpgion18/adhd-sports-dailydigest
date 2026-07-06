@@ -29,6 +29,11 @@ function loadTwitterWidgetsScript(): Promise<void> {
   return widgetsScriptPromise;
 }
 
+// X's widget script is documented as intermittently failing to convert the
+// fallback <a> into an iframe on first try (a known 2026 reliability issue,
+// not specific to this app) — a few retries clears most of those misses.
+const LOAD_RETRY_DELAYS_MS = [1000, 2500, 5000];
+
 export function SourceTweetEmbed({ handle }: { handle: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // Defaults to "light" for a hydration-safe first render (no `window` on
@@ -46,13 +51,25 @@ export function SourceTweetEmbed({ handle }: { handle: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    function attemptLoad() {
+      if (cancelled || !containerRef.current || !window.twttr) return;
+      // Already converted to an iframe — nothing left to retry.
+      if (!containerRef.current.querySelector("a.twitter-timeline")) return;
+      window.twttr.widgets.load(containerRef.current);
+    }
+
     loadTwitterWidgetsScript().then(() => {
-      if (!cancelled && containerRef.current && window.twttr) {
-        window.twttr.widgets.load(containerRef.current);
+      attemptLoad();
+      for (const delay of LOAD_RETRY_DELAYS_MS) {
+        timers.push(setTimeout(attemptLoad, delay));
       }
     });
+
     return () => {
       cancelled = true;
+      timers.forEach(clearTimeout);
     };
     // Re-run when `theme` settles so the widget is created with the right
     // theme rather than needing a second load() pass.
@@ -61,13 +78,15 @@ export function SourceTweetEmbed({ handle }: { handle: string }) {
   return (
     <div ref={containerRef}>
       <a
-        className="twitter-timeline"
+        className="twitter-timeline text-blue-600 underline dark:text-blue-400"
         data-height="400"
         data-tweet-limit="3"
         data-theme={theme}
-        href={`https://twitter.com/${handle}?ref_src=twsrc%5Etfw`}
+        href={`https://x.com/${handle}?ref_src=twsrc%5Etfw`}
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        Tweets by @{handle}
+        View @{handle}&apos;s recent posts on X ↗
       </a>
     </div>
   );
