@@ -1,7 +1,7 @@
 import type { PodcastPrep } from "@/data/podcast-prep";
 
 export function PodcastPrepView({ data }: { data: PodcastPrep }) {
-  const { bigThree, hotTakes, champChump, startBenchCut, worldCup, weirdOne } = data;
+  const { bigThree, worldCup, weirdOne } = data;
 
   return (
     <div className="flex flex-col gap-8">
@@ -15,57 +15,6 @@ export function PodcastPrepView({ data }: { data: PodcastPrep }) {
               <p className="text-zinc-700 dark:text-zinc-300">{item.text}</p>
             </div>
           ))}
-        </div>
-      </Section>
-
-      <Section title="Hot Take Fuel">
-        <ul className="flex flex-col gap-4">
-          {hotTakes.map((take, i) => (
-            <li
-              key={i}
-              className="rounded-xl border border-zinc-200 bg-white p-4 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
-            >
-              {take}
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section title="Champ & Chump">
-        <div className="flex flex-col gap-3">
-          <p>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              Champ:{" "}
-            </span>
-            <span className="text-zinc-700 dark:text-zinc-300">{champChump.champ}</span>
-          </p>
-          <p>
-            <span className="font-semibold text-red-600 dark:text-red-400">
-              Chump:{" "}
-            </span>
-            <span className="text-zinc-700 dark:text-zinc-300">{champChump.chump}</span>
-          </p>
-        </div>
-      </Section>
-
-      <Section title={`Start, Bench, Cut — ${startBenchCut.theme}`}>
-        <div className="flex flex-col gap-3">
-          <p>
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              Start:{" "}
-            </span>
-            <span className="text-zinc-700 dark:text-zinc-300">{startBenchCut.start}</span>
-          </p>
-          <p>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">
-              Bench:{" "}
-            </span>
-            <span className="text-zinc-700 dark:text-zinc-300">{startBenchCut.bench}</span>
-          </p>
-          <p>
-            <span className="font-semibold text-red-600 dark:text-red-400">Cut: </span>
-            <span className="text-zinc-700 dark:text-zinc-300">{startBenchCut.cut}</span>
-          </p>
         </div>
       </Section>
 

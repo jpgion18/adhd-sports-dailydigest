@@ -3,18 +3,6 @@ export interface BigThreeItem {
   text: string;
 }
 
-export interface ChampChump {
-  champ: string;
-  chump: string;
-}
-
-export interface StartBenchCut {
-  theme: string;
-  start: string;
-  bench: string;
-  cut: string;
-}
-
 export interface WorldCupWatch {
   yesterday: string;
   today: string;
@@ -26,9 +14,6 @@ export interface PodcastPrep {
   date: string;
   dateLabel: string;
   bigThree: BigThreeItem[];
-  hotTakes: string[];
-  champChump: ChampChump;
-  startBenchCut: StartBenchCut;
   worldCup: WorldCupWatch;
   weirdOne: string;
 }
@@ -53,21 +38,6 @@ export const podcastPrepArchive: PodcastPrep[] = [
         text: "They pulled off the trade of the summer — Jaylen Brown for Paul George and four picks — and the league's reaction has been \"the Sixers robbed Boston,\" with grades from A- to A+. Brown slots in next to Embiid and Maxey six years younger than George, and Philly also locked up Anfernee Simons within 24 hours of the trade.",
       },
     ],
-    hotTakes: [
-      "Did the Sixers just fleece the Celtics, or is pairing an oft-hurt Jaylen Brown next to Embiid's knees a disaster waiting to happen? Everyone's grading this an A+ heist — but \"healthiest version of both guys\" has never once been the Sixers' reality.",
-      "Is A.J. Brown's \"we drifted apart\" comment a shot at Jalen Hurts's ability to be \"the guy,\" or offseason noise blown way out of proportion? Hurts says the relationship's fine; Brown's the one who asked out.",
-      'Should MLB expand robo-umps after Aaron Boone got tossed arguing a balk call he "still didn\'t have clarity on" — right before a grand slam made it moot? Or does pulling the human element out ruin the sport\'s texture?',
-    ],
-    champChump: {
-      champ: "Kylian Mbappé, ice-cold from the spot in brutal heat, buries the 70th-minute penalty at our own Lincoln Financial Field to send France to the World Cup quarterfinals.",
-      chump: "Aaron Boone, ejected mid-game demanding an explanation for a balk call — and then had to watch Kansas City hit a grand slam two batters later anyway.",
-    },
-    startBenchCut: {
-      theme: "Offseason Traded Stars",
-      start: "Jaylen Brown — walks into the best situation of his career next to Embiid and Maxey on a real contender.",
-      bench: "Paul George — the résumé's real, but a 35-year-old with a beat-up knee heading to a Boston rebuild is watch-and-see, not plug-and-play.",
-      cut: 'A.J. Brown — leaves Philly with a "we drifted apart" quote hanging over him; if New England\'s offense can\'t get him the ball, this trade ages badly fast.',
-    },
     worldCup: {
       yesterday: "Morocco throttled Canada 3-0, and France beat Paraguay 1-0 right here at the Linc on Mbappé's penalty — Philly's World Cup run is officially over, but the city got its moment on the world stage during America's 250th birthday weekend.",
       today: "Brazil-Norway at MetLife (4pm) and Mexico-England in Mexico City (8pm) close out the Round of 16.",
