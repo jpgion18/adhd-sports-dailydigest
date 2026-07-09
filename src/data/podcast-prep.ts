@@ -22,6 +22,81 @@ export interface PodcastPrep {
 // insertion order — use the exported helpers, which sort by `date`.
 export const podcastPrepArchive: PodcastPrep[] = [
   {
+    date: "2026-07-09",
+    dateLabel: "July 9, 2026",
+    bigThree: [
+      {
+        team: "Phillies",
+        text: "Rough one last night — Reds hit four home runs in the 4th inning alone (Sal Stewart with two of them) in an 11-5 win, and the Phillies' pitching staff allowed five homers total, tying a season high. The lone bright spot: Kyle Schwarber went deep for his MLB-leading 32nd homer, passing Mike Schmidt's 1979 total (31) for the most in franchise history before the All-Star break, with Realmuto also homering.",
+      },
+      {
+        team: "Eagles",
+        text: "Still quiet on Broad Street — the team's rolling out position-group training camp previews (interior D-line this time: Jalen Carter, Jordan Davis, and Moro Ojomo) with camp three weeks out on July 28.",
+      },
+      {
+        team: "Sixers",
+        text: "Summer League tips off today in Las Vegas — the Sixers open at 5:30pm ET against the Pistons on Prime Video, first look at No. 22 pick LaBaron Philon Jr. and second-year big man Johni Broome.",
+      },
+    ],
+    worldCup: {
+      yesterday: "Round of 16 wrapped up: Argentina survived a wild one, coming back from 2-0 down in the 79th minute to beat Egypt 3-2 (Messi scored and assisted, Enzo Fernández got the 92nd-minute winner), and Switzerland beat Colombia on penalties after a scoreless 120 minutes.",
+      today: "Quarterfinals kick off — France vs. Morocco is first up today.",
+      usmnt: "Done for the tournament after Monday's 4-1 Round of 16 loss to Belgium, who now face Spain in the quarters.",
+    },
+    weirdOne:
+      "A dog walker in Buenos Aires has turned a pack of 13 pups into local celebrities by dressing them all in Argentina jerseys for the World Cup run — genuinely might be getting more street attention than some of the actual players right now.",
+  },
+  {
+    date: "2026-07-08",
+    dateLabel: "July 8, 2026",
+    bigThree: [
+      {
+        team: "Phillies",
+        text: "Bounced back from Monday's blowout loss with a 4-1 win over the Reds last night in Cincinnati. They're back at it again today to close out the series.",
+      },
+      {
+        team: "Eagles",
+        text: "Camp preview season continues — running back room coverage this time, with Saquon Barkley entrenched as the headliner, free-agent add Dameon Pierce, and Elijah Mitchell signed after an Eagles rookie-camp tryout. Report date is still July 28.",
+      },
+      {
+        team: "Sixers",
+        text: "Everything's pointed at tomorrow's Summer League opener in Las Vegas against the Pistons — the full 2026 roster is set, led by No. 22 pick LaBaron Philon Jr.",
+      },
+    ],
+    worldCup: {
+      yesterday: "Belgium eliminated the USMNT 4-1 in the Round of 16 Monday night in Seattle — Charles De Ketelaere scored twice and assisted a third, and Malik Tillman's free-kick goal was the lone U.S. answer.",
+      today: "Round of 16 finishes today: Argentina-Egypt and Switzerland-Colombia close out the bracket before Thursday's quarterfinals begin.",
+      usmnt: "The co-hosts' tournament is over — first Round of 16 appearance since 2002 ends the same way that one did, in the round of 16.",
+    },
+    weirdOne:
+      "Adam Sandler reportedly officiated Taylor Swift and Travis Kelce's wedding over the weekend, then went and played in a pickup basketball game right after — living two completely different main-character lives within a few hours of each other.",
+  },
+  {
+    date: "2026-07-07",
+    dateLabel: "July 7, 2026",
+    bigThree: [
+      {
+        team: "Phillies",
+        text: "Ugly one Monday — Royals hammered them 15-1, multiple home runs in the loss. They get a chance to answer back tonight against the Reds in Cincinnati.",
+      },
+      {
+        team: "Eagles",
+        text: "Training camp preview coverage is rolling out position by position (running back and tight end so far) ahead of the July 28 report date — Dallas Goedert enters camp as the clear No. 1 tight end again, with second-round pick Eli Stowers behind him.",
+      },
+      {
+        team: "Sixers",
+        text: "Released their official 2026 Summer League roster for Las Vegas (July 9-19), headlined by No. 22 overall pick LaBaron Philon Jr. — the Alabama guard averaged 22.0 points and 5.0 assists as a sophomore. Tip-off against the Pistons is Thursday.",
+      },
+    ],
+    worldCup: {
+      yesterday: "Belgium ended the USMNT's tournament with a 4-1 Round of 16 win in Seattle — Charles De Ketelaere had two goals and an assist, with Malik Tillman's free kick the lone U.S. goal.",
+      today: "Round of 16 continues — Argentina and Switzerland are both in action this week before the bracket moves to quarterfinals on Thursday.",
+      usmnt: "Tournament's over — Belgium moves on to face Spain in the quarterfinals.",
+    },
+    weirdOne:
+      "Adam Sandler reportedly officiated Taylor Swift and Travis Kelce's Madison Square Garden wedding last weekend, then hopped straight into a pickup basketball game afterward.",
+  },
+  {
     date: "2026-07-06",
     dateLabel: "July 6, 2026",
     bigThree: [
